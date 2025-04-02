@@ -35,7 +35,7 @@ fun AddEditScreen(
     var validationError by remember { mutableStateOf(false) }
 
     fun validateInput(name: String, description: String): Boolean {
-        return name.isNotBlank() && description.isNotBlank()
+        return name.isNotBlank() && description.isNotBlank() && name.length >= 3 && description.length >= 3
     }
 
     Surface(modifier = modifier.fillMaxSize()) {

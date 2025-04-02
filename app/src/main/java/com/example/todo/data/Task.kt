@@ -1,5 +1,9 @@
 package com.example.todo.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "todo_tasks")
 /**
  * Data class representing a task. Data classes are special classes in Kotlin that are used to
  * represent data, the benefits of using a data class are that it automatically generates
@@ -16,5 +20,6 @@ data class Task(
     var description: String,
     var isCompleted: Boolean = false,
     var isImportant: Boolean = false,
+    @PrimaryKey
     val taskId: Long = System.currentTimeMillis()
 )

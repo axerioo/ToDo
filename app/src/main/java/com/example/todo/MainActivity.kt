@@ -16,9 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ToDoTheme {
-                Scaffold { innerPadding ->
-                    ToDoListScreen(modifier = Modifier.padding(innerPadding))
-                }
+                ToDoApp()
             }
         }
     }

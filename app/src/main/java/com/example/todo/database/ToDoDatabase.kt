@@ -13,7 +13,7 @@ import com.example.todo.data.Task
  * When you change the entity class you should update the version number.
  */
 @Database(entities = [Task::class], version = 1)
-abstract class ToDoDatabase() : RoomDatabase() {
+abstract class ToDoDatabase : RoomDatabase() {
     // The access to the data is done through the DAO (Data Access Object) interface.
     abstract fun dao(): ToDoDao
 
@@ -24,7 +24,7 @@ abstract class ToDoDatabase() : RoomDatabase() {
      */
     companion object {
         // The name of the database
-        const val DATABASE_NAME = "todo_database"
+        private const val DATABASE_NAME = "todo_database"
 
         // Variable to hold the database instance. The @Volatile annotation means that the access
         // to the variable is always atomic and the write operations are

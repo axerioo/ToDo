@@ -1,8 +1,12 @@
-// @file:Suppress("FunctionName")
-package com.example.todolistapp.ui
+package com.example.todo.ui
 
 import android.util.Log
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -46,7 +50,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.todo.R
-import com.example.todo.data.DataSource
 import com.example.todo.data.Task
 import com.example.todo.database.ToDoRepository
 import com.example.todo.ui.theme.ToDoTheme
@@ -71,7 +74,10 @@ fun ToDoListScreen(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
             ) {
-                items(items = tasks) { task ->
+                items(
+                    items = tasks,
+                    key = { it.taskId }
+                ) { task ->
                     TaskItem(
                         task = task,
                         onEditClick = { onEdit(task) },
@@ -91,8 +97,10 @@ fun ToDoListScreen(
                 DeleteConfirmationDialog(
                     task = taskToDelete!!,
                     onConfirm = {
-                        DataSource.deleteTask(taskToDelete!!)
-                        taskToDelete = null
+                        coroutineScope.launch {
+                            repository.deleteTask(taskToDelete!!)
+                            taskToDelete = null
+                        }
                         showDeleteDialog = false
                     },
                     onDismiss = {
@@ -123,7 +131,26 @@ fun TaskItem(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val rotationAngle by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
+    val rotationAngle by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 500),
+        label = "Chevron Rotation"
+    )
+
+    val contentHeight by animateDpAsState(
+        targetValue = if (expanded) (3 * 56).dp else 56.dp,
+        animationSpec = spring(
+            stiffness = Spring.StiffnessLow,
+            dampingRatio = Spring.DampingRatioLowBouncy
+        ),
+        label = "Content Height Animation"
+    )
+
+    val surfaceColor by animateColorAsState(
+        targetValue = if (task.isCompleted) MaterialTheme.colorScheme.primaryContainer
+                      else MaterialTheme.colorScheme.inverseOnSurface,
+        animationSpec = tween(durationMillis = 250),
+    )
 
     Surface(
         modifier = modifier
@@ -132,15 +159,14 @@ fun TaskItem(
             .combinedClickable(
                 onClick = { expanded = !expanded },
                 onLongClick = onDelete // Long press to delete
-            ),
-        color = if (task.isCompleted) MaterialTheme.colorScheme.inversePrimary
-                else MaterialTheme.colorScheme.surface,
+            )
+            .height(contentHeight),
+        color = surfaceColor,
         shape = RoundedCornerShape(12.dp),
         shadowElevation = 4.dp
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(8.dp)
         ) {
             Row(
@@ -149,15 +175,14 @@ fun TaskItem(
                 if (task.isImportant) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
-                            .background(Color.Red, shape = CircleShape)
+                            .width(6.dp)
+                            .size(32.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.error,
+                                shape = CircleShape
+                            )
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
-
-//                Box do oznaczenia ważności;
-//                Box do oznaczenia ukończenia, jako nakładka kolorem szarym;
-
                 Checkbox(
                     checked = task.isCompleted,
                     onCheckedChange = { onCheckedChange(it) }
@@ -176,7 +201,7 @@ fun TaskItem(
                 }
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = stringResource(R.string.expand),
+                    contentDescription = "Expand",
                     modifier = Modifier
                         .size(24.dp)
                         .rotate(rotationAngle)
@@ -214,6 +239,23 @@ fun DeleteConfirmationDialog(
             }
         }
     )
+}
+
+@Preview
+@Composable
+fun TaskItemPreview() {
+    ToDoTheme {
+        TaskItem(
+            task = Task(
+                name = "Important Task",
+                description = "This is an important task.",
+                isImportant = true
+            ),
+            onEditClick = {},
+            onDelete = {},
+            onCheckedChange = {}
+        )
+    }
 }
 
 @Preview

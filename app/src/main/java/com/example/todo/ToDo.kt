@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,8 +30,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.todo.data.DataSource
+import com.example.todo.database.ToDoRepository
 import com.example.todo.ui.AddEditScreen
 import com.example.todolistapp.ui.ToDoListScreen
+import kotlinx.coroutines.launch
 
 enum class ToDoAppDestinations(@StringRes val title: Int) {
     List(title = R.string.list_screen_title),
@@ -61,6 +64,7 @@ fun ToDoListTopBar(
 
 @Composable
 fun ToDoApp(
+    repository: ToDoRepository,
     navController: NavHostController = rememberNavController()
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -68,6 +72,7 @@ fun ToDoApp(
     val currentScreen = ToDoAppDestinations.valueOf(
         screenName ?: ToDoAppDestinations.List.name
     )
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -94,7 +99,7 @@ fun ToDoApp(
                 .padding(innerPadding)
         ) {
             composable(route = ToDoAppDestinations.List.name) {
-                ToDoListScreen(
+                ToDoListScreen(repository = repository,
                     onEdit = { taskToEdit ->
                         navController.navigate("${ToDoAppDestinations.Edit.name}/${taskToEdit.taskId}")
                     }
@@ -103,7 +108,9 @@ fun ToDoApp(
             composable(route = ToDoAppDestinations.Add.name) {
                 AddEditScreen(
                     onSave = {
-                        DataSource.addTask(it)
+                        coroutineScope.launch {
+                            repository.addTask(it)
+                        }
                         navController.navigateUp()
                     },
                     onCancel = {
@@ -134,8 +141,8 @@ fun ToDoApp(
     }
 }
 
-@Preview
-@Composable
-fun ToDoPreview() {
-    ToDoApp()
-}
+//@Preview
+//@Composable
+//fun ToDoPreview() {
+//    ToDoApp()
+//}
